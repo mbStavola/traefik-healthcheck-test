@@ -1,0 +1,29 @@
+version: "3.3"
+
+services:
+
+    delay-service-traefik:
+        image: "traefik:v2.9"
+        container_name: "traefik"
+        command:
+          - "--api.insecure=true"
+          - "--providers.docker=true"
+          - "--providers.docker.exposedbydefault=false"
+        volumes:
+            - "/var/run/docker.sock:/var/run/docker.sock:ro"
+
+    delay-service-app:
+        build:
+            context: ./
+        environment:
+            SERVICE_PORT: 80
+            SERVICE_DELAY: 10000
+        deploy:
+            mode: replicated
+            replicas: 5
+        labels:
+            - "traefik.enable=true"
+            - "traefik.http.services.delay-service.loadbalancer.server.port=80"
+            - "traefik.http.services.delay-service.loadbalancer.healthcheck.path=/"
+            - "traefik.http.services.delay-service.loadbalancer.healthcheck.interval=10s"
+            - "traefik.http.services.delay-service.loadbalancer.healthcheck.timeout=10s"
